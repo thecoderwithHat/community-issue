@@ -11,22 +11,24 @@ import {
   Sparkles,
 } from "lucide-react";
 import type { AuthoritySummary, IssueCluster, IssueReport, IssueSeverity } from "@/app/types";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
-const severityRank: Record<IssueSeverity, number> = {
-  High: 3,
-  Medium: 2,
-  Low: 1,
-};
+function OfficialContent() {
+  const severityRank: Record<IssueSeverity, number> = {
+    High: 3,
+    Medium: 2,
+    Low: 1,
+  };
 
-const severityStyles: Record<IssueSeverity, string> = {
-  High: "bg-red-100 text-red-700 border-red-200",
-  Medium: "bg-amber-100 text-amber-700 border-amber-200",
-  Low: "bg-emerald-100 text-emerald-700 border-emerald-200",
-};
+  const severityStyles: Record<IssueSeverity, string> = {
+    High: "bg-red-100 text-red-700 border-red-200",
+    Medium: "bg-amber-100 text-amber-700 border-amber-200",
+    Low: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  };
 
-const mockIssues: IssueReport[] = [
-  {
-    id: "ISS-9821",
+  const mockIssues: IssueReport[] = [
+    {
+      id: "ISS-9821",
     title: "Major pothole damaging buses",
     description: "Large sinkhole on MG Road causing lane closure",
     issueType: "Pothole",
@@ -109,9 +111,9 @@ const mockIssues: IssueReport[] = [
     ward: "Ward 23",
     duplicates: 1,
   },
-];
+  ];
 
-function clusterIssues(issues: IssueReport[]): IssueCluster[] {
+  const clusterIssues = (issues: IssueReport[]): IssueCluster[] => {
   const map = new Map<string, IssueCluster>();
 
   issues.forEach((issue) => {
@@ -137,9 +139,8 @@ function clusterIssues(issues: IssueReport[]): IssueCluster[] {
   });
 
   return Array.from(map.values()).sort((a, b) => b.count - a.count);
-}
+  };
 
-export default function OfficialDashboardPage() {
   const [summary, setSummary] = useState<AuthoritySummary | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -149,20 +150,29 @@ export default function OfficialDashboardPage() {
       [...mockIssues]
         .sort((a, b) => severityRank[b.severity] - severityRank[a.severity])
         .slice(0, 4),
-    []
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [mockIssues]
   );
 
-  const clusters = useMemo(() => clusterIssues(mockIssues), []);
+  const clusters = useMemo(
+    () => clusterIssues(mockIssues),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [mockIssues]
+  );
 
-  const totals = useMemo(() => {
-    const high = mockIssues.filter((issue) => issue.severity === "High").length;
-    const pending = mockIssues.filter((issue) => issue.status !== "Resolved").length;
-    return {
-      total: mockIssues.length,
-      high,
-      pending,
-    };
-  }, []);
+  const totals = useMemo(
+    () => {
+      const high = mockIssues.filter((issue) => issue.severity === "High").length;
+      const pending = mockIssues.filter((issue) => issue.status !== "Resolved").length;
+      return {
+        total: mockIssues.length,
+        high,
+        pending,
+      };
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
   const fetchSummary = async () => {
     try {
@@ -192,10 +202,12 @@ export default function OfficialDashboardPage() {
 
   useEffect(() => {
     fetchSummary();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-12 text-slate-900">
+    <ProtectedRoute>
+      <main className="min-h-screen bg-slate-50 px-4 py-12 text-slate-900">
       <div className="mx-auto flex max-w-6xl flex-col gap-10">
         <header className="rounded-3xl bg-slate-900 px-8 py-10 text-white shadow-2xl">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
@@ -346,7 +358,12 @@ export default function OfficialDashboardPage() {
         </section>
       </div>
     </main>
+    </ProtectedRoute>
   );
+}
+
+export default function OfficialPage() {
+  return <OfficialContent />;
 }
 
 function StatPill({ label, value }: { label: string; value: string }) {

@@ -4,8 +4,9 @@ import Image from "next/image";
 import { useState, useRef } from "react";
 import { Camera, Mic, MapPin, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { IssueAnalysis, ComplaintStatus } from "../types";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
-export default function Home() {
+function ReportContent() {
   const [description, setDescription] = useState("");
   const [image, setImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -111,7 +112,8 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans">
+    <ProtectedRoute>
+      <main className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans">
       <div className="max-w-2xl mx-auto space-y-8">
         
         {/* Header */}
@@ -350,5 +352,10 @@ export default function Home() {
         )}
       </div>
     </main>
+    </ProtectedRoute>
   );
+}
+
+export default function Home() {
+  return <ReportContent />;
 }
