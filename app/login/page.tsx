@@ -1,1 +1,5 @@
-export default function Login() { return <div className='p-8 text-center text-xl'>Login Page Placeholder</div>; }
+import AuthPage from "@/components/auth/AuthPage";
+
+export default function LoginPage() {
+	return <AuthPage mode="login" />;
+}

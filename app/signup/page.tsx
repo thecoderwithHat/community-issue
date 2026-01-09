@@ -1,1 +1,5 @@
-export default function Signup() { return <div className='p-8 text-center text-xl'>Signup Page Placeholder</div>; }
+import AuthPage from "@/components/auth/AuthPage";
+
+export default function SignupPage() {
+	return <AuthPage mode="signup" />;
+}
