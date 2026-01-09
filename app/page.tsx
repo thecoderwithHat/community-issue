@@ -1,9 +1,31 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import { ArrowRight, CheckCircle, Users, Zap, Shield, Menu, Sparkles } from "lucide-react";
+import { auth } from "@/lib/firebase";
 
 export default function LandingPage() {
+  const [user, setUser] = useState<User | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (current) => {
+      setUser(current);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      setSigningOut(true);
+      await signOut(auth);
+    } finally {
+      setSigningOut(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-white selection:bg-emerald-500/30">
       {/* Navigation */}
@@ -17,16 +39,40 @@ export default function LandingPage() {
               <span className="text-xl font-bold text-white tracking-tight">CI<span className="text-emerald-500">Reporter</span></span>
             </div>
             
-            <div className="hidden md:flex items-center space-x-8">
+            <div className="hidden md:flex items-center space-x-6">
               <Link href="#features" className="text-slate-400 hover:text-emerald-400 font-medium transition-colors text-sm">Features</Link>
               <Link href="#impact" className="text-slate-400 hover:text-emerald-400 font-medium transition-colors text-sm">Impact</Link>
-              <Link href="/login" className="text-white font-medium hover:text-emerald-400 transition-colors text-sm">Log in</Link>
-              <Link 
-                href="/signup" 
-                className="bg-emerald-500 text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20"
-              >
-                Sign up
-              </Link>
+
+              {user ? (
+                <div className="flex items-center gap-3">
+                  <Link
+                    href="/dashboard"
+                    className="text-sm font-semibold text-emerald-400 hover:text-emerald-300"
+                  >
+                    Go to dashboard
+                  </Link>
+                  <span className="rounded-full bg-emerald-500/10 border border-emerald-500/40 px-3 py-1 text-xs font-semibold text-emerald-200">
+                    {user.displayName || user.email || "Logged in"}
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    disabled={signingOut}
+                    className="text-sm font-semibold text-slate-300 hover:text-emerald-300 disabled:opacity-60"
+                  >
+                    {signingOut ? "Signing out..." : "Log out"}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <Link href="/login" className="text-white font-medium hover:text-emerald-400 transition-colors text-sm">Log in</Link>
+                  <Link 
+                    href="/signup" 
+                    className="bg-emerald-500 text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20"
+                  >
+                    Sign up
+                  </Link>
+                </>
+              )}
             </div>
 
             <div className="md:hidden">
