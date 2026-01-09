@@ -3,16 +3,26 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import { ArrowRight, CheckCircle, Users, Zap, Shield, Menu, Sparkles } from "lucide-react";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 
 export default function LandingPage() {
   const [user, setUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (current) => {
+    const unsubscribe = onAuthStateChanged(auth, async (current) => {
       setUser(current);
+      if (current) {
+        // Fetch user role from Firestore
+        const userDoc = await getDoc(doc(db, "users", current.uid));
+        const userData = userDoc.data();
+        setUserRole(userData?.role || "user");
+      } else {
+        setUserRole(null);
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -25,6 +35,8 @@ export default function LandingPage() {
       setSigningOut(false);
     }
   };
+
+  const dashboardPath = userRole === "official" ? "/official" : "/report";
 
   return (
     <div className="min-h-screen bg-slate-950 text-white selection:bg-emerald-500/30">
@@ -46,10 +58,10 @@ export default function LandingPage() {
               {user ? (
                 <div className="flex items-center gap-3">
                   <Link
-                    href="/dashboard"
+                    href={dashboardPath}
                     className="text-sm font-semibold text-emerald-400 hover:text-emerald-300"
                   >
-                    Go to dashboard
+                    {userRole === "official" ? "Official Dashboard" : "Report Issue"}
                   </Link>
                   <span className="rounded-full bg-emerald-500/10 border border-emerald-500/40 px-3 py-1 text-xs font-semibold text-emerald-200">
                     {user.displayName || user.email || "Logged in"}

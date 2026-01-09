@@ -44,6 +44,7 @@ export default function AuthPage({ mode }: AuthPageProps) {
   const [error, setError] = useState<string | null>(null);
   
   // Email/Password State
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<UserRole>("user");
@@ -74,6 +75,7 @@ export default function AuthPage({ mode }: AuthPageProps) {
       if (mode === "signup") {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await setDoc(doc(db, "users", userCredential.user.uid), {
+          name: name,
           email: userCredential.user.email,
           role: role,
           createdAt: new Date().toISOString(),
@@ -142,6 +144,23 @@ export default function AuthPage({ mode }: AuthPageProps) {
           </div>
 
           <form onSubmit={handleEmailAuth} className="space-y-4">
+            {mode === "signup" && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-300" htmlFor="name">Full Name</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-2.5 h-5 w-5 text-slate-500" />
+                  <input
+                    id="name"
+                    type="text"
+                    placeholder="Your full name"
+                    className="w-full rounded-xl border border-slate-700 bg-slate-900/50 py-2.5 pl-10 pr-4 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-300" htmlFor="email">Email</label>
               <div className="relative">
