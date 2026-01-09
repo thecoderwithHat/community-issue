@@ -1,10 +1,62 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
+import { routeIssue } from "@/lib/routing";
+import { adminDb } from "@/lib/firebaseAdmin";
+import type { ComplaintHistoryEntry, ComplaintStatus } from "@/app/types";
+
+function createComplaintId() {
+  const randomSegment = Math.floor(1000 + Math.random() * 9000);
+  return `CIR-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${randomSegment}`;
+}
+
+function buildComplaintTracking(severity?: string) {
+  const normalized = (severity || "").toLowerCase();
+  const status: ComplaintStatus = normalized === "high" ? "In Progress" : "Submitted";
+  const baseTime = Date.now();
+
+  const history: ComplaintHistoryEntry[] = [
+    {
+      status: "Submitted",
+      timestamp: new Date(baseTime).toISOString(),
+      note: "Complaint recorded and routed to control center.",
+    },
+  ];
+
+  if (status === "In Progress") {
+    history.push({
+      status: "In Progress",
+      timestamp: new Date(baseTime + 30 * 60 * 1000).toISOString(),
+      note: "Work order issued to field response unit.",
+    });
+  } else {
+    history.push({
+      status: "In Progress",
+      timestamp: null,
+      note: "Awaiting crew assignment based on workload.",
+    });
+  }
+
+  history.push({
+    status: "Resolved",
+    timestamp: null,
+    note: "Resolution pending verification visit.",
+  });
+
+  return {
+    complaintId: createComplaintId(),
+    status,
+    history,
+  };
+}
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { description, image } = body;
+    const { description, image, location } = body as {
+      description?: string;
+      image?: string | null;
+      location?: { lat: number; lng: number } | null;
+    };
 
     // Use a placeholder if not set, but ideally should be in env
     const apiKey = process.env.GEMINI_API_KEY;
@@ -32,6 +84,7 @@ export async function POST(req: Request) {
       3. Determine the responsible department (e.g., Sanitation, Roads, Water Board, Electricity, Traffic Police).
       4. Estimate urgency (Immediate, Within 24hrs, Routine).
       5. Generate a concise title and summary.
+      6. Extract 3-5 descriptive keywords capturing materials, locations, or failure patterns.
 
       Return ONLY a valid JSON object with the following structure:
       {
@@ -40,7 +93,8 @@ export async function POST(req: Request) {
         "department": "string",
         "urgency": "string",
         "title": "string",
-        "summary": "string"
+        "summary": "string",
+        "keywords": ["string", "string"]
       }
     `;
 
@@ -77,6 +131,30 @@ export async function POST(req: Request) {
     }
     
     const parsedParams = JSON.parse(jsonMatch[0]);
+
+    if (!Array.isArray(parsedParams.keywords)) {
+      parsedParams.keywords = [];
+    }
+
+    const routing = routeIssue(parsedParams.issueType || "", location);
+    parsedParams.department = routing.department;
+    parsedParams.routing = routing;
+
+    const tracking = buildComplaintTracking(parsedParams.severity);
+    parsedParams.complaintId = tracking.complaintId;
+    parsedParams.status = tracking.status;
+    parsedParams.history = tracking.history;
+
+    await adminDb
+      .collection("issues")
+      .doc(parsedParams.complaintId)
+      .set({
+        description: description || null,
+        image: image || null,
+        location: location || null,
+        createdAt: new Date().toISOString(),
+        analysis: parsedParams,
+      });
 
     return NextResponse.json(parsedParams);
 

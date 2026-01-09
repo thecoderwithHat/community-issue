@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState, useRef } from "react";
 import { Camera, Mic, MapPin, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
-import { IssueAnalysis } from "../types";
+import { IssueAnalysis, ComplaintStatus } from "../types";
 
 export default function Home() {
   const [description, setDescription] = useState("");
@@ -14,6 +14,30 @@ export default function Home() {
   const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
   const [gettingLocation, setGettingLocation] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const statusPillStyles: Record<ComplaintStatus, string> = {
+    Submitted: "bg-gray-100 text-gray-800 border-gray-200",
+    "In Progress": "bg-amber-100 text-amber-700 border-amber-200",
+    Resolved: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  };
+
+  const timelineDotStyles: Record<ComplaintStatus, string> = {
+    Submitted: "bg-gray-400",
+    "In Progress": "bg-amber-500",
+    Resolved: "bg-emerald-500",
+  };
+
+  const formatTimelineTime = (timestamp: string | null) => {
+    if (!timestamp) {
+      return "Pending update";
+    }
+    return new Date(timestamp).toLocaleString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+      month: "short",
+      day: "numeric",
+    });
+  };
 
   const getLocation = () => {
     if (!navigator.geolocation) {
@@ -65,7 +89,7 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ description, image }),
+        body: JSON.stringify({ description, image, location }),
       });
 
       const data = await response.json();
@@ -249,9 +273,65 @@ export default function Home() {
                   <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Urgency</label>
                   <div className="text-base font-medium text-blue-600">{result.urgency}</div>
                 </div>
+                {result.keywords && result.keywords.length > 0 && (
+                  <div>
+                    <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Keywords</label>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {result.keywords.map((keyword) => (
+                        <span key={keyword} className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
+                          {keyword}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {result.routing && (
+                  <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                    <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Assigned Authority</label>
+                    <div className="mt-1 text-base font-semibold text-gray-900">{result.routing.department}</div>
+                    <p className="text-sm text-gray-500">{result.routing.notes}</p>
+                    <div className="mt-4 grid gap-3 text-sm text-gray-600">
+                      <span className="font-medium text-gray-700">Jurisdiction: <span className="font-normal">{result.routing.jurisdiction}</span></span>
+                      <span className="font-medium text-gray-700">Response SLA: <span className="font-normal">{result.routing.responseSLA}</span></span>
+                      <span className="font-medium text-gray-700">Contact: <span className="font-normal">{result.routing.contact}</span></span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             
+            {result.history && result.history.length > 0 && (
+              <div className="mt-6 rounded-2xl border border-gray-100 bg-white/60 p-6">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-500">Complaint Tracking</p>
+                    <p className="text-lg font-bold text-gray-900">ID: {result.complaintId}</p>
+                  </div>
+                  {result.status && (
+                    <span className={`inline-flex items-center rounded-full border px-4 py-1 text-sm font-semibold ${statusPillStyles[result.status]}`}>
+                      Current Status: {result.status}
+                    </span>
+                  )}
+                </div>
+
+                <ol className="mt-6 space-y-4">
+                  {result.history.map((entry, index) => (
+                    <li key={`${entry.status}-${index}`} className="flex gap-4">
+                      <div className="flex flex-col items-center">
+                        <span className={`h-3 w-3 rounded-full ${timelineDotStyles[entry.status]}`} />
+                        {index < result.history.length - 1 && <span className="mt-1 h-full w-px bg-gray-200" />}
+                      </div>
+                      <div className="flex-1 rounded-xl bg-gray-50 p-3">
+                        <p className="text-sm font-semibold text-gray-900">{entry.status}</p>
+                        <p className="text-xs text-gray-500">{formatTimelineTime(entry.timestamp)}</p>
+                        <p className="mt-1 text-sm text-gray-600">{entry.note}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+
             <div className="mt-6 pt-6 border-t border-gray-100">
                <div className="flex items-center gap-2 text-gray-500 text-sm">
                   <MapPin className="w-4 h-4" />

@@ -1,5 +1,12 @@
 export type IssueSeverity = "Low" | "Medium" | "High";
 export type IssueUrgency = "Immediate" | "Within 24hrs" | "Routine";
+export type ComplaintStatus = "Submitted" | "In Progress" | "Resolved";
+
+export interface ComplaintHistoryEntry {
+  status: ComplaintStatus;
+  timestamp: string | null;
+  note: string;
+}
 
 export interface IssueAnalysis {
   issueType: string;
@@ -8,6 +15,19 @@ export interface IssueAnalysis {
   urgency: IssueUrgency;
   title: string;
   summary: string;
+  keywords: string[];
+  routing: IssueRouting;
+  complaintId: string;
+  status: ComplaintStatus;
+  history: ComplaintHistoryEntry[];
+}
+
+export interface IssueRouting {
+  department: string;
+  contact: string;
+  responseSLA: string;
+  jurisdiction: string;
+  notes: string;
 }
 
 export interface IssueReport {
