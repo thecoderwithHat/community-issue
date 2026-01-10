@@ -352,7 +352,38 @@ function ReportContent() {
                </div>
             </div>
             
-            <button className="w-full mt-4 py-3 bg-emerald-500 text-white rounded-xl font-medium hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 transition-all">
+            <button 
+              onClick={async () => {
+                if (!result) return;
+                try {
+                  const response = await fetch("/api/submit-report", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ analysis: result, location }),
+                  });
+
+                  const data = await response.json();
+
+                  if (!response.ok) {
+                    throw new Error(data.error || "Failed to submit report");
+                  }
+
+                  setError(null);
+                  setResult(null);
+                  setDescription("");
+                  setImage(null);
+                  alert(`Report submitted successfully! Complaint ID: ${data.complaintId}`);
+                } catch (err) {
+                  if (err instanceof Error) {
+                    setError(err.message);
+                  } else {
+                    setError("Failed to submit report");
+                  }
+                }
+              }}
+              className="w-full mt-4 py-3 bg-emerald-500 text-white rounded-xl font-medium hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 transition-all">
               Confirm & Officially Report
             </button>
           </div>

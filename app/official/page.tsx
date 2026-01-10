@@ -13,6 +13,20 @@ import {
 import type { AuthoritySummary, IssueCluster, IssueReport, IssueSeverity } from "@/app/types";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
+type QueuedIssue = {
+  complaintId: string;
+  title: string;
+  summary: string;
+  issueType: string;
+  severity: IssueSeverity;
+  urgency: string;
+  status: string;
+  routing: {
+    jurisdiction: string;
+  };
+  enqueuedAt: string;
+};
+
 function OfficialContent() {
   const severityRank: Record<IssueSeverity, number> = {
     High: 3,
@@ -26,92 +40,46 @@ function OfficialContent() {
     Low: "bg-emerald-100 text-emerald-700 border-emerald-200",
   };
 
-  const mockIssues: IssueReport[] = [
-    {
-      id: "ISS-9821",
-    title: "Major pothole damaging buses",
-    description: "Large sinkhole on MG Road causing lane closure",
-    issueType: "Pothole",
-    severity: "High",
-    urgency: "Immediate",
-    status: "In Progress",
-    location: "MG Road near Metro Gate 2",
-    coordinates: { lat: 12.9742, lng: 77.6057 },
-    reportedAt: "2026-01-09T05:20:00Z",
-    ward: "Ward 54",
-    duplicates: 7,
-  },
-  {
-    id: "ISS-9827",
-    title: "Overflowing community bins",
-    description: "Garbage spilling onto footpath, foul odour",
-    issueType: "Garbage",
-    severity: "Medium",
-    urgency: "Within 24hrs",
-    status: "Submitted",
-    location: "Indiranagar 100ft Rd",
-    coordinates: { lat: 12.9714, lng: 77.6408 },
-    reportedAt: "2026-01-09T06:45:00Z",
-    ward: "Ward 80",
-    duplicates: 3,
-  },
-  {
-    id: "ISS-9831",
-    title: "Streetlights off for 3 nights",
-    description: "Dark stretch outside Govt school",
-    issueType: "Streetlight",
-    severity: "High",
-    urgency: "Immediate",
-    status: "Submitted",
-    location: "BTM Layout 2nd Stage",
-    coordinates: { lat: 12.9166, lng: 77.6101 },
-    reportedAt: "2026-01-08T21:15:00Z",
-    ward: "Ward 177",
-    duplicates: 5,
-  },
-  {
-    id: "ISS-9840",
-    title: "Water leak flooding basement",
-    description: "Constant leak from supply pipe",
-    issueType: "Water",
-    severity: "Medium",
-    urgency: "Within 24hrs",
-    status: "In Progress",
-    location: "Whitefield Main Rd",
-    coordinates: { lat: 12.9698, lng: 77.7499 },
-    reportedAt: "2026-01-09T02:30:00Z",
-    ward: "Ward 84",
-    duplicates: 2,
-  },
-  {
-    id: "ISS-9844",
-    title: "Open drain near market",
-    description: "Children exposed to untreated water",
-    issueType: "Sanitation",
-    severity: "High",
-    urgency: "Immediate",
-    status: "Submitted",
-    location: "KR Market Circle",
-    coordinates: { lat: 12.9644, lng: 77.5830 },
-    reportedAt: "2026-01-09T04:05:00Z",
-    ward: "Ward 119",
-    duplicates: 4,
-  },
-  {
-    id: "ISS-9850",
-    title: "Broken traffic signal",
-    description: "Signal outage causing jams",
-    issueType: "Traffic",
-    severity: "Low",
-    urgency: "Routine",
-    status: "Submitted",
-    location: "Hebbal flyover",
-    coordinates: { lat: 13.0359, lng: 77.5970 },
-    reportedAt: "2026-01-08T18:00:00Z",
-    ward: "Ward 23",
-    duplicates: 1,
-  },
-  ];
+  const [issues, setIssues] = useState<IssueReport[]>([]);
+  const [loadingIssues, setLoadingIssues] = useState(true);
+
+  const fetchIssues = async () => {
+    try {
+      setLoadingIssues(true);
+      const res = await fetch("/api/queue");
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch issues");
+      }
+      
+      // Transform QueuedIssue to IssueReport format
+      const transformed: IssueReport[] = data.issues.map((issue: QueuedIssue) => ({
+        id: issue.complaintId,
+        title: issue.title,
+        description: issue.summary,
+        issueType: issue.issueType,
+        severity: issue.severity,
+        urgency: issue.urgency,
+        status: issue.status,
+        location: issue.routing.jurisdiction,
+        coordinates: { lat: 12.9716, lng: 77.5946 }, // Default Bangalore coords
+        reportedAt: issue.enqueuedAt,
+        ward: "Ward",
+        duplicates: 0,
+      }));
+      
+      setIssues(transformed);
+    } catch (err) {
+      console.error("Error fetching issues:", err);
+      setIssues([]);
+    } finally {
+      setLoadingIssues(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchIssues();
+  }, []);
 
   const clusterIssues = (issues: IssueReport[]): IssueCluster[] => {
   const map = new Map<string, IssueCluster>();
@@ -147,31 +115,28 @@ function OfficialContent() {
 
   const priorityQueue = useMemo(
     () =>
-      [...mockIssues]
+      [...issues]
         .sort((a, b) => severityRank[b.severity] - severityRank[a.severity])
         .slice(0, 4),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mockIssues]
+    [issues]
   );
 
   const clusters = useMemo(
-    () => clusterIssues(mockIssues),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mockIssues]
+    () => clusterIssues(issues),
+    [issues]
   );
 
   const totals = useMemo(
     () => {
-      const high = mockIssues.filter((issue) => issue.severity === "High").length;
-      const pending = mockIssues.filter((issue) => issue.status !== "Resolved").length;
+      const high = issues.filter((issue) => issue.severity === "High").length;
+      const pending = issues.filter((issue) => issue.status !== "Resolved").length;
       return {
-        total: mockIssues.length,
+        total: issues.length,
         high,
         pending,
       };
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [issues]
   );
 
   const fetchSummary = async () => {
@@ -181,7 +146,7 @@ function OfficialContent() {
       const res = await fetch("/api/official/summary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ issues: mockIssues }),
+        body: JSON.stringify({ issues }),
       });
 
       const data = await res.json();
@@ -201,9 +166,10 @@ function OfficialContent() {
   };
 
   useEffect(() => {
-    fetchSummary();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (issues.length > 0) {
+      fetchSummary();
+    }
+  }, [issues]);
 
   return (
     <ProtectedRoute requiredRole="official">
@@ -291,7 +257,17 @@ function OfficialContent() {
             <h2 className="text-2xl font-bold text-slate-900">Severity-based Routing</h2>
 
             <div className="mt-6 space-y-4">
-              {priorityQueue.map((issue) => (
+              {loadingIssues ? (
+                <div className="flex h-32 items-center justify-center gap-3 text-slate-500">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Loading priority queue...</span>
+                </div>
+              ) : priorityQueue.length === 0 ? (
+                <div className="text-center py-8 text-slate-500">
+                  <p>No issues in queue</p>
+                </div>
+              ) : (
+                priorityQueue.map((issue) => (
                 <div key={issue.id} className="rounded-2xl border border-slate-100 p-4 shadow-sm">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-slate-900">{issue.title}</h3>
@@ -315,7 +291,8 @@ function OfficialContent() {
                     </span>
                   </div>
                 </div>
-              ))}
+              ))
+              )}
             </div>
           </div>
         </section>
