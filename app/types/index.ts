@@ -32,6 +32,8 @@ export interface IssueRouting {
 
 export interface IssueReport {
   id: string;
+  userId?: string;
+  userEmail?: string;
   title: string;
   description: string;
   issueType: string;

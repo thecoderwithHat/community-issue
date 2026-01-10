@@ -9,9 +9,11 @@ import type { IssueAnalysis } from "@/app/types";
  */
 export async function POST(req: Request) {
   try {
-    const { analysis, location } = (await req.json()) as {
+    const { analysis, location, userId, userEmail } = (await req.json()) as {
       analysis: IssueAnalysis;
       location?: { lat: number; lng: number };
+      userId?: string;
+      userEmail?: string;
     };
 
     if (!analysis) {
@@ -35,6 +37,8 @@ export async function POST(req: Request) {
         routing: routingData,
       },
       location,
+      userId: userId || null,
+      userEmail: userEmail || null,
       submittedAt: new Date().toISOString(),
       status: "Submitted",
     };

@@ -6,6 +6,7 @@ import { Camera, Mic, MapPin, Loader2, AlertCircle, CheckCircle2 } from "lucide-
 import { IssueAnalysis, ComplaintStatus } from "../types";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Navbar from "@/components/Navbar";
+import { auth } from "@/lib/firebase";
 
 function ReportContent() {
   const [description, setDescription] = useState("");
@@ -356,12 +357,18 @@ function ReportContent() {
               onClick={async () => {
                 if (!result) return;
                 try {
+                  const user = auth.currentUser;
                   const response = await fetch("/api/submit-report", {
                     method: "POST",
                     headers: {
                       "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({ analysis: result, location }),
+                    body: JSON.stringify({ 
+                      analysis: result, 
+                      location,
+                      userId: user?.uid,
+                      userEmail: user?.email
+                    }),
                   });
 
                   const data = await response.json();

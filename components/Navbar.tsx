@@ -58,6 +58,14 @@ export default function Navbar() {
 
             {user ? (
               <div className="flex items-center gap-3">
+                {userRole !== "official" && (
+                   <Link
+                    href="/dashboard"
+                     className={`text-sm font-semibold transition-colors ${pathname === "/dashboard" ? 'text-emerald-500' : 'text-slate-400 hover:text-emerald-400'}`}
+                  >
+                    Dashboard
+                  </Link>
+                )}
                 <Link
                   href={dashboardPath}
                   className={`text-sm font-semibold transition-colors ${pathname === dashboardPath ? 'text-emerald-500' : 'text-emerald-400 hover:text-emerald-300'}`}
