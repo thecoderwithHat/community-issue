@@ -120,11 +120,6 @@ export default function LandingPage() {
       <footer className="bg-slate-950 py-12 border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="text-2xl font-bold text-white">CI<span className="text-emerald-500">Reporter</span></div>
-          <div className="flex gap-8 text-slate-500 text-sm font-medium">
-            <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>
-            <Link href="#" className="hover:text-white transition-colors">Terms of Service</Link>
-            <Link href="#" className="hover:text-white transition-colors">Contact Support</Link>
-          </div>
           <p className="text-slate-600 text-sm">© 2026 Community Issue Reporter. All rights reserved.</p>
         </div>
       </footer>
