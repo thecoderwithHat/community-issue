@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
-import { routeIssue } from "@/lib/routing";
+import { routeIssueDynamic } from "@/lib/routingDb";
+import { addToQueue } from "@/lib/priorityQueue";
 import { adminDb } from "@/lib/firebaseAdmin";
 import type { ComplaintHistoryEntry, ComplaintStatus } from "@/app/types";
 
@@ -148,7 +149,12 @@ export async function POST(req: Request) {
       parsedParams.keywords = [];
     }
 
-    const routing = routeIssue(parsedParams.issueType || "", location);
+    // Use dynamic routing with DB-backed configuration and severity prioritization
+    const routing = await routeIssueDynamic(
+      parsedParams.issueType || "",
+      parsedParams.severity || "Medium",
+      location
+    );
     parsedParams.department = routing.department;
     parsedParams.routing = routing;
 
@@ -167,6 +173,14 @@ export async function POST(req: Request) {
         createdAt: new Date().toISOString(),
         analysis: parsedParams,
       });
+
+    // Add to priority queue
+        await addToQueue(
+          parsedParams,
+          routing.priority,
+          routing.escalated,
+          location ?? undefined
+        );
 
     return NextResponse.json(parsedParams);
 

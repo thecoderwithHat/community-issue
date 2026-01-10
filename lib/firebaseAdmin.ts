@@ -1,5 +1,6 @@
 import { getApps, initializeApp, cert, App } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+export { Timestamp } from "firebase-admin/firestore";
 
 type AdminConfig = {
   projectId: string;
