@@ -42,6 +42,7 @@ function OfficialContent() {
 
   const [issues, setIssues] = useState<IssueReport[]>([]);
   const [loadingIssues, setLoadingIssues] = useState(true);
+  const [selectedIssue, setSelectedIssue] = useState<IssueReport | null>(null);
 
   const fetchIssues = async () => {
     try {
@@ -268,7 +269,11 @@ function OfficialContent() {
                 </div>
               ) : (
                 priorityQueue.map((issue, index) => (
-                <div key={`${issue.id}-${index}`} className="rounded-2xl border border-slate-100 p-4 shadow-sm">
+                <button
+                  key={`${issue.id}-${index}`}
+                  onClick={() => setSelectedIssue(issue)}
+                  className="w-full rounded-2xl border border-slate-100 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                >
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-slate-900">{issue.title}</h3>
                     <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${severityStyles[issue.severity]}`}>
@@ -290,12 +295,79 @@ function OfficialContent() {
                       {new Date(issue.reportedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </span>
                   </div>
-                </div>
+                </button>
               ))
               )}
             </div>
           </div>
         </section>
+
+        {selectedIssue && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+            onClick={() => setSelectedIssue(null)}
+          >
+            <div
+              className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Complaint ID</p>
+                  <h3 className="text-2xl font-bold text-slate-900">{selectedIssue.id}</h3>
+                  <p className="mt-2 text-lg font-semibold text-slate-800">{selectedIssue.title}</p>
+                  <p className="mt-2 text-sm text-slate-600">{selectedIssue.description}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${severityStyles[selectedIssue.severity]}`}>
+                    {selectedIssue.severity}
+                  </span>
+                  <button
+                    onClick={() => setSelectedIssue(null)}
+                    className="rounded-full border border-slate-200 px-3 py-1 text-sm text-slate-600 transition hover:bg-slate-50"
+                    aria-label="Close details"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Type</p>
+                  <p className="text-sm font-medium text-slate-800">{selectedIssue.issueType}</p>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Urgency</p>
+                  <p className="text-sm font-medium text-slate-800">{selectedIssue.urgency}</p>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</p>
+                  <p className="text-sm font-medium text-slate-800">{selectedIssue.status}</p>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Location</p>
+                  <p className="text-sm font-medium text-slate-800">{selectedIssue.location}</p>
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-2xl border border-slate-100 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Reported At</p>
+                  <p className="text-sm font-medium text-slate-800">
+                    {new Date(selectedIssue.reportedAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-slate-100 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Ward</p>
+                  <p className="text-sm font-medium text-slate-800">{selectedIssue.ward}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
