@@ -12,6 +12,7 @@ function ReportContent() {
   const [description, setDescription] = useState("");
   const [image, setImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<IssueAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
@@ -101,6 +102,7 @@ function ReportContent() {
         throw new Error(data.error || "Something went wrong");
       }
 
+      // Show the analysis results for user confirmation
       setResult(data);
     } catch (err) {
       if (err instanceof Error) {
@@ -110,6 +112,46 @@ function ReportContent() {
       }
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  const submitReport = async (analysis: IssueAnalysis) => {
+    try {
+      setIsSubmitting(true);
+      const user = auth.currentUser;
+      const response = await fetch("/api/submit-report", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          analysis, 
+          location,
+          userId: user?.uid,
+          userEmail: user?.email
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to submit report");
+      }
+
+      setError(null);
+      setResult(null);
+      setDescription("");
+      setImage(null);
+      // Use the complaintId from the analysis (generated during classification)
+      alert(`Report submitted successfully! Complaint ID: ${analysis.complaintId}`);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Failed to submit report");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -221,16 +263,16 @@ function ReportContent() {
 
             <button
               type="submit"
-              disabled={isAnalyzing}
+              disabled={isAnalyzing || isSubmitting}
               className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-4 px-6 rounded-xl shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg"
             >
-              {isAnalyzing ? (
+              {isAnalyzing || isSubmitting ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Analyzing Issue...
+                  {isAnalyzing ? "Analyzing Issue..." : "Submitting Report..."}
                 </>
               ) : (
-                "Submit Report"
+                "Generate Report"
               )}
             </button>
           </form>
@@ -245,7 +287,7 @@ function ReportContent() {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-white">Analysis Complete</h2>
-                <p className="text-sm text-slate-400">Proposed classification & routing</p>
+                <p className="text-sm text-slate-400">Review and confirm to submit your report</p>
               </div>
             </div>
 
@@ -356,42 +398,18 @@ function ReportContent() {
             <button 
               onClick={async () => {
                 if (!result) return;
-                try {
-                  const user = auth.currentUser;
-                  const response = await fetch("/api/submit-report", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ 
-                      analysis: result, 
-                      location,
-                      userId: user?.uid,
-                      userEmail: user?.email
-                    }),
-                  });
-
-                  const data = await response.json();
-
-                  if (!response.ok) {
-                    throw new Error(data.error || "Failed to submit report");
-                  }
-
-                  setError(null);
-                  setResult(null);
-                  setDescription("");
-                  setImage(null);
-                  alert(`Report submitted successfully! Complaint ID: ${data.complaintId}`);
-                } catch (err) {
-                  if (err instanceof Error) {
-                    setError(err.message);
-                  } else {
-                    setError("Failed to submit report");
-                  }
-                }
+                await submitReport(result);
               }}
-              className="w-full mt-4 py-3 bg-emerald-500 text-white rounded-xl font-medium hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 transition-all">
-              Confirm & Officially Report
+              disabled={isSubmitting}
+              className="w-full mt-4 py-3 bg-emerald-500 text-white rounded-xl font-medium hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                "Confirm & Submit"
+              )}
             </button>
           </div>
         )}

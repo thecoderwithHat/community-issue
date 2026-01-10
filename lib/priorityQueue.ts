@@ -52,7 +52,7 @@ export async function addToQueue(
       status: escalated ? "Escalated" : "Queued",
       enqueuedAt: Timestamp.now(),
       departmentId: analysis.routing.department,
-      coordinates,
+      ...(coordinates && { coordinates }),
     };
 
     const docRef = await adminDb.collection("issueQueue").add(queueEntry);
