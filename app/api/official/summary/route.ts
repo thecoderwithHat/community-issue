@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import type { AuthoritySummary, IssueReport } from "@/app/types";
 
 function buildPrompt(issues: IssueReport[]): string {
@@ -51,12 +51,16 @@ export async function POST(req: Request) {
       );
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const prompt = buildPrompt(issues);
+    const ai = new GoogleGenAI({ apiKey });
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [{ role: "user", parts: [{ text: buildPrompt(issues) }] }],
+    });
+    const text = response.text;
 
-    const response = await model.generateContent([{ text: prompt }]);
-    const text = response.response.text();
+    if (!text) {
+      throw new Error("Gemini response did not include text");
+    }
 
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) {

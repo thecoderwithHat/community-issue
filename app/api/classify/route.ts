@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 import { routeIssue } from "@/lib/routing";
 import { adminDb } from "@/lib/firebaseAdmin";
@@ -68,9 +68,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    // Using gemini-1.5-flash as it is fast and multimodal capable
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const ai = new GoogleGenAI({ apiKey });
+    const model = "gemini-2.5-flash";
 
     const prompt = `
       You are an AI assistant for a civic issue reporting platform. 
@@ -98,10 +97,15 @@ export async function POST(req: Request) {
       }
     `;
 
-    type PromptPart = { text: string };
-    type InlineImagePart = { inlineData: { data: string; mimeType: string } };
+    type PromptPart = { type: 'text'; text: string };
+    type ImagePart = { type: 'image'; data: string; mime_type: string };
 
-    const parts: Array<PromptPart | InlineImagePart> = [{ text: prompt }];
+    const input: Array<PromptPart | ImagePart> = [
+      {
+        type: 'text',
+        text: prompt
+      }
+    ];
 
     if (image) {
       // Expecting base64 string
@@ -109,18 +113,26 @@ export async function POST(req: Request) {
       const base64Data = image.split(',').pop();
 
       if (base64Data) {
-        parts.push({
-          inlineData: {
-            data: base64Data,
-            mimeType: "image/jpeg", // simplistic assumption for demo, in prod send mimeType
-          },
+        input.push({
+          type: 'image',
+          data: base64Data,
+          mime_type: "image/jpeg", // simplistic assumption for demo, in prod send mimeType
         });
       }
     }
 
-    const result = await model.generateContent(parts);
-    const response = await result.response;
-    const text = response.text();
+    const interaction = await ai.interactions.create({
+      model: model,
+      input: input
+    });
+
+    let text = '';
+    for (const output of interaction.outputs!) {
+      if (output.type === 'text') {
+        text = output.text || '';
+        break;
+      }
+    }
 
     console.log("Gemini response:", text);
 
