@@ -176,7 +176,7 @@ function ReportContent() {
         </div>
 
         {/* Reporting Form */}
-        <div className="bg-slate-900 rounded-2xl shadow-xl p-6 md:p-8 space-y-6 border border-slate-800">
+        <div className="bg-slate-900 rounded-2xl shadow-xl p-4 md:p-8 space-y-6 border border-slate-800">
           <form onSubmit={handleSubmit} className="space-y-6">
             
             {/* Input Options */}
@@ -191,14 +191,14 @@ function ReportContent() {
                 className="w-full bg-slate-950 text-white p-4 border border-slate-800 rounded-xl focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none min-h-[120px] placeholder:text-slate-600"
               />
               
-              <div className="flex gap-3">
+              <div className="grid grid-cols-3 gap-2 md:gap-3">
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-slate-800 text-slate-300 border border-slate-700 rounded-xl hover:bg-slate-700 hover:text-white transition-colors"
+                  className="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 py-3 px-2 md:px-4 bg-slate-800 text-slate-300 border border-slate-700 rounded-xl hover:bg-slate-700 hover:text-white transition-colors"
                 >
                   <Camera className="w-5 h-5 text-emerald-500" />
-                  <span className="text-sm font-medium">Add Photo</span>
+                  <span className="text-xs md:text-sm font-medium text-center">Add Photo</span>
                 </button>
                 <input
                   type="file"
@@ -211,21 +211,21 @@ function ReportContent() {
                 <button
                   type="button"
                   onClick={getLocation}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-slate-800 text-slate-300 border border-slate-700 rounded-xl hover:bg-slate-700 hover:text-white transition-colors"
+                  className="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 py-3 px-2 md:px-4 bg-slate-800 text-slate-300 border border-slate-700 rounded-xl hover:bg-slate-700 hover:text-white transition-colors"
                   title="Get current location"
                 >
                   {gettingLocation ? <Loader2 className="w-5 h-5 animate-spin text-emerald-500" /> : <MapPin className="w-5 h-5 text-red-400" />}
-                  <span className="text-sm font-medium">{location ? "Loc. Set" : "Location"}</span>
+                  <span className="text-xs md:text-sm font-medium text-center">{location ? "Loc. Set" : "Location"}</span>
                 </button>
                 
                 {/* Placeholder for Voice - functionality not implemented in MVP */}
                 <button
                   type="button"
-                  className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-slate-800/50 text-slate-600 border border-slate-800 rounded-xl cursor-not-allowed"
+                  className="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 py-3 px-2 md:px-4 bg-slate-800/50 text-slate-600 border border-slate-800 rounded-xl cursor-not-allowed"
                   title="Voice input coming soon"
                 >
                   <Mic className="w-5 h-5" />
-                  <span className="text-sm font-medium">Voice</span>
+                  <span className="text-xs md:text-sm font-medium text-center">Voice</span>
                 </button>
               </div>
 
@@ -280,7 +280,7 @@ function ReportContent() {
 
         {/* Results Section */}
         {result && (
-          <div className="bg-slate-900 rounded-2xl shadow-xl p-6 md:p-8 space-y-6 border border-slate-800 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="bg-slate-900 rounded-2xl shadow-xl p-4 md:p-8 space-y-6 border border-slate-800 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
               <div className="p-2 bg-emerald-500/10 rounded-full">
                 <CheckCircle2 className="w-6 h-6 text-emerald-400" />
