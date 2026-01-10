@@ -12,6 +12,7 @@ export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -97,12 +98,89 @@ export default function Navbar() {
           </div>
 
           <div className="md:hidden">
-            <button className="text-slate-400 hover:text-white">
+            <button 
+              onClick={() => setIsOpen(!isOpen)}
+              className="text-slate-400 hover:text-white"
+            >
               <Menu className="h-6 w-6" />
             </button>
           </div>
         </div>
       </div>
+
+      {isOpen && (
+        <div className="md:hidden bg-slate-950 border-t border-slate-800">
+          <div className="px-4 pt-2 pb-6 space-y-2">
+            <Link 
+              href={isHomePage ? "#features" : "/#features"}
+              className="block px-3 py-2 text-base font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg"
+              onClick={() => setIsOpen(false)}
+            >
+              Features
+            </Link>
+            <Link 
+              href={isHomePage ? "#impact" : "/#impact"}
+              className="block px-3 py-2 text-base font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg"
+              onClick={() => setIsOpen(false)}
+            >
+              Impact
+            </Link>
+            
+            {user ? (
+              <>
+                 {userRole !== "official" && (
+                   <Link
+                    href="/dashboard"
+                     className={`block px-3 py-2 text-base font-medium rounded-lg ${pathname === "/dashboard" ? 'text-emerald-500 bg-slate-900' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}
+                     onClick={() => setIsOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                )}
+                <Link
+                  href={dashboardPath}
+                  className={`block px-3 py-2 text-base font-medium rounded-lg ${pathname === dashboardPath ? 'text-emerald-500 bg-slate-900' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}
+                  onClick={() => setIsOpen(false)}
+                >
+                  {userRole === "official" ? "Official Dashboard" : "Report Issue"}
+                </Link>
+                <div className="border-t border-slate-800 my-2 pt-2">
+                   <div className="px-3 py-2 text-sm text-slate-500">
+                      Signed in as <span className="text-emerald-400">{user.displayName || user.email}</span>
+                   </div>
+                   <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsOpen(false);
+                    }}
+                    disabled={signingOut}
+                    className="block w-full text-left px-3 py-2 text-base font-medium text-red-400 hover:text-red-300 hover:bg-slate-800 rounded-lg"
+                  >
+                    {signingOut ? "Signing out..." : "Log out"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="border-t border-slate-800 my-2 pt-2 space-y-2">
+                <Link 
+                  href="/login" 
+                  className="block px-3 py-2 text-base font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Log in
+                </Link>
+                <Link 
+                  href="/signup" 
+                  className="block px-3 py-2 text-base font-medium bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 text-center"
+                   onClick={() => setIsOpen(false)}
+                >
+                  Sign up
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

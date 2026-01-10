@@ -13,10 +13,7 @@ export default function LandingPage() {
       <div className="relative pt-32 pb-20 sm:pt-40 sm:pb-24 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center rounded-full px-4 py-1.5 mb-8 border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-medium text-sm">
-              <span className="flex h-2 w-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
-              Community Driven Initiative
-            </div>
+            
             <h1 className="text-5xl sm:text-7xl font-bold text-white tracking-tight mb-8 leading-tight">
               Empowering Citizens,<br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Transforming Communities</span>
@@ -79,8 +76,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-24 bg-slate-950 text-white relative overflow-hidden">
+      {/* Impact Section */}
+      <section id="impact" className="py-24 bg-slate-950 text-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
