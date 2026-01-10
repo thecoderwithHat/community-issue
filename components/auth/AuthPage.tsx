@@ -8,7 +8,7 @@ import {
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword 
 } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { Loader2, ShieldCheck, Users, Sparkles, Mail, Lock, User, Briefcase } from "lucide-react";
 import { auth, googleProvider, db } from "@/lib/firebase";
 
@@ -53,8 +53,24 @@ export default function AuthPage({ mode }: AuthPageProps) {
     try {
       setLoading(true);
       setError(null);
-      await signInWithPopup(auth, googleProvider);
-      router.push("/report");
+      const cred = await signInWithPopup(auth, googleProvider);
+      const user = cred.user;
+
+      // try to load role from Firestore; default to 'user'
+      try {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const userData = userDoc.data();
+        const userRole = userData?.role || "user";
+        if (userRole === "official") {
+          router.push("/official");
+        } else {
+          router.push("/report");
+        }
+      } catch (e) {
+        // If role lookup fails, fall back to report page
+        console.error("Failed to load user role:", e);
+        router.push("/report");
+      }
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -80,11 +96,29 @@ export default function AuthPage({ mode }: AuthPageProps) {
           role: role,
           createdAt: new Date().toISOString(),
         });
+        // redirect based on selected role
+        if (role === "official") {
+          router.push("/official");
+        } else {
+          router.push("/report");
+        }
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        // lookup role in Firestore and redirect accordingly
+        try {
+          const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
+          const userData = userDoc.data();
+          const userRole = userData?.role || "user";
+          if (userRole === "official") {
+            router.push("/official");
+          } else {
+            router.push("/report");
+          }
+        } catch (e) {
+          console.error("Failed to load user role:", e);
+          router.push("/report");
+        }
       }
-
-      router.push("/report");
     } catch (err) {
       if (err instanceof Error) {
         let msg = err.message;
