@@ -267,8 +267,8 @@ function OfficialContent() {
                   <p>No issues in queue</p>
                 </div>
               ) : (
-                priorityQueue.map((issue) => (
-                <div key={issue.id} className="rounded-2xl border border-slate-100 p-4 shadow-sm">
+                priorityQueue.map((issue, index) => (
+                <div key={`${issue.id}-${index}`} className="rounded-2xl border border-slate-100 p-4 shadow-sm">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-slate-900">{issue.title}</h3>
                     <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${severityStyles[issue.severity]}`}>

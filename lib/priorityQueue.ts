@@ -70,8 +70,8 @@ export async function getQueuedIssues(
   departmentId?: string
 ): Promise<QueuedIssue[]> {
   try {
-    const issueQueueCollection = adminDb.collection<IssueQueue>("issueQueue");
-    let query: Query<IssueQueue> = issueQueueCollection
+    const issueQueueCollection = adminDb.collection("issueQueue");
+    let query: Query = issueQueueCollection
       .where("status", "in", ["Queued", "Escalated"])
       .orderBy("status", "desc") // Escalated first
       .orderBy("priority", "asc") // Lower priority number = higher priority
@@ -83,10 +83,16 @@ export async function getQueuedIssues(
 
     const snapshot = await query.get();
     const queuedIssues: QueuedIssue[] = [];
+    const seenComplaintIds = new Set<string>();
     let position = 1;
 
     for (const doc of snapshot.docs) {
       const queueData = doc.data() as IssueQueue;
+
+      // Skip if we've already processed this complaint
+      if (seenComplaintIds.has(queueData.complaintId)) {
+        continue;
+      }
 
       // Fetch full issue analysis
       const issueDoc = await adminDb
@@ -101,6 +107,7 @@ export async function getQueuedIssues(
         }
         const analysis: IssueAnalysis = issueData.analysis;
 
+        seenComplaintIds.add(queueData.complaintId);
         queuedIssues.push({
           ...analysis,
           queuePosition: position,
@@ -148,8 +155,8 @@ export async function updateQueueStatus(
  */
 export async function getQueueStats(departmentId?: string): Promise<QueueStats | null> {
   try {
-    const issueQueueCollection = adminDb.collection<IssueQueue>("issueQueue");
-    let query: Query<IssueQueue> = issueQueueCollection;
+    const issueQueueCollection = adminDb.collection("issueQueue");
+    let query: Query = issueQueueCollection;
 
     if (departmentId) {
       query = query.where("departmentId", "==", departmentId);
